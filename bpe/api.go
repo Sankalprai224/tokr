@@ -3,6 +3,7 @@ package bpe
 import (
 	"math"
 	"strings"
+	"sync/atomic"
 )
 
 func (t *tokenizer) Encode(text string, useGPT4 bool) []int {
@@ -15,11 +16,14 @@ func (t *tokenizer) Encode(text string, useGPT4 bool) []int {
 
 	for _, chunk := range textChunks {
 
+		atomic.AddInt64(&t.TotalChunks, 1)
+
 		t.cacheMu.RLock()
 		cached, found := t.cache[chunk]
 		t.cacheMu.RUnlock()
 
 		if found {
+			atomic.AddInt64(&t.CacheHits, 1)
 			allTokens = append(allTokens, cached...)
 			continue
 		}

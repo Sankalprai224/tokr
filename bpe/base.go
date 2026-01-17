@@ -20,6 +20,8 @@ type tokenizer struct {
 	pattern       string
 	cache         map[string][]int
 	cacheMu       sync.RWMutex
+	CacheHits     int64
+	TotalChunks   int64
 }
 
 func NewTokenizer() *tokenizer {
