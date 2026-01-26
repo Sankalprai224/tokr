@@ -8,7 +8,8 @@ import (
 	"net/http"
 	"os"
 	"time"
-	"tokenizer/bpe"
+
+	"github.com/HeLiX-x/tokr/bpe"
 )
 
 func main() {

@@ -5,7 +5,8 @@ import (
 	"log"
 	"os"
 	"time"
-	"tokenizer/bpe" // Ensure this matches your module name
+
+	"github.com/HeLiX-x/tokr/bpe"
 )
 
 func main() {

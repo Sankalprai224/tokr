@@ -1,4 +1,5 @@
-module tokenizer
+//module tokenizer
+module github.com/HeLiX-x/tokr
 
 go 1.22.2
 
