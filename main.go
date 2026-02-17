@@ -92,7 +92,7 @@ func runInference(modelPath, inputPath string, gpt4 bool) {
 	start := time.Now()
 
 	// 3. Run the Hot Path
-	ids := t.Encode(text, gpt4)
+	ids := t.ParallelEncode(text, gpt4)
 
 	// 4. Stop the Timer
 	duration := time.Since(start)
@@ -133,6 +133,14 @@ type TokenizeResponse struct {
 	Time   float64 `json:"time_seconds"`
 }
 
+type DecodeRequest struct {
+	Tokens []int `json:"tokens"`
+}
+
+type DecodeResponse struct {
+	Text string `json:"text"`
+}
+
 func runServer(modelPath, port string, gpt4 bool) {
 
 	fmt.Printf("loading model from %s\n", modelPath)
@@ -162,6 +170,28 @@ func runServer(modelPath, port string, gpt4 bool) {
 			Tokens: tokens,
 			Count:  len(tokens),
 			Time:   duration,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	})
+
+	http.HandleFunc("/decode", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var req DecodeRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "bad request", http.StatusBadRequest)
+			return
+		}
+
+		decodedText := t.Decoder(req.Tokens)
+
+		resp := DecodeResponse{
+			Text: decodedText,
 		}
 
 		w.Header().Set("Content-Type", "application/json")

@@ -7,30 +7,34 @@ import (
 )
 
 func (t *tokenizer) Encode(text string, useGPT4 bool) []int {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	//t.mu.RLock()
+	//defer t.mu.RUnlock()
 
-	textChunks := SplitText(text, useGPT4)
+	//textChunks := SplitText(text, useGPT4)
 
-	allTokens := make([]int, 0, len(text)/3+1)
+	//allTokens := make([]int, 0, len(text)/3+1)
 
-	for _, chunk := range textChunks {
+	//for _, chunk := range textChunks {
 
-		atomic.AddInt64(&t.TotalChunks, 1)
+	//	atomic.AddInt64(&t.TotalChunks, 1)
 
-		t.cacheMu.RLock()
-		cached, found := t.cache[chunk]
-		t.cacheMu.RUnlock()
+	t.cacheMu.RLock()
+	cached, found := t.cache[text]
+	t.cacheMu.RUnlock()
 
-		if found {
-			atomic.AddInt64(&t.CacheHits, 1)
-			allTokens = append(allTokens, cached...)
-			continue
-		}
+	if found {
+		atomic.AddInt64(&t.CacheHits, 1)
+		//allTokens = append(allTokens, cached...)
+		return append([]int(nil), cached...)
 
-		bufptr := t.bufferpool.Get().(*[]int)
-		ids := (*bufptr)[:0]
+	}
 
+	tokens := t.encodeCore(text, useGPT4)
+
+	//bufptr := t.bufferpool.Get().(*[]int)
+	//ids := (*bufptr)[:0]
+
+	/*
 		for i := 0; i < len(chunk); i++ {
 			ids = append(ids, int(chunk[i]))
 		}
@@ -62,18 +66,98 @@ func (t *tokenizer) Encode(text string, useGPT4 bool) []int {
 		}
 
 		allTokens = append(allTokens, ids...)
+	*/
+	finalTokens := make([]int, len(tokens))
+	copy(finalTokens, tokens)
 
-		finalTokens := make([]int, len(ids))
-		copy(finalTokens, ids)
+	t.cacheMu.Lock()
+	t.cache[text] = finalTokens
+	t.cacheMu.Unlock()
 
-		t.cacheMu.Lock()
-		t.cache[chunk] = finalTokens
-		t.cacheMu.Unlock()
+	atomic.AddInt64(&t.TotalChunks, 1)
+	return tokens
 
-		*bufptr = ids
-		t.bufferpool.Put(bufptr)
+	//*bufptr = ids
+	//t.bufferpool.Put(bufptr)
+}
+
+func (t *tokenizer) encodeCore(text string, useGPT4 bool) []int {
+
+	//	textChunks := SplitText(text, useGPT4)
+
+	allTokens := make([]int, 0, len(text)/3+1)
+
+	ids := make([]int, 0, 1024)
+
+	if useGPT4 {
+		match, _ := re.FindStringMatch(text)
+
+		for match != nil {
+			chunk := match.String()
+
+			//	for _, chunk := range textChunks {
+
+			ids = ids[:0]
+
+			for i := 0; i < len(chunk); i++ {
+				ids = append(ids, int(chunk[i]))
+			}
+
+			runMergeLogic(t, &ids)
+
+			allTokens = append(allTokens, ids...)
+
+			match, _ = re.FindNextMatch(match)
+
+		}
+	} else {
+		textChunks := FastSplit(text)
+
+		for _, chunk := range textChunks {
+			ids = ids[:0]
+			for i := 0; i < len(chunk); i++ {
+				ids = append(ids, int(chunk[i]))
+			}
+			runMergeLogic(t, &ids)
+			allTokens = append(allTokens, ids...)
+		}
 	}
 	return allTokens
+
+}
+
+func runMergeLogic(t *tokenizer, ids *[]int) {
+
+	val := *ids
+
+	for {
+		if len(val) < 2 {
+			break
+		}
+		bestIdx := -1
+		minrank := math.MaxInt
+
+		for i := 0; i < len(val)-1; i++ {
+			p := pair{val[i], val[i+1]}
+			if rank, ok := t.merges[p]; ok {
+				if rank < minrank {
+					minrank = rank
+					bestIdx = i
+				}
+			}
+		}
+		if bestIdx == -1 {
+			break
+		}
+
+		val[bestIdx] = minrank
+
+		copy(val[bestIdx+1:], val[bestIdx+2:])
+		val = val[:len(val)-1]
+	}
+
+	*ids = val
+
 }
 
 func (t *tokenizer) Decoder(ids []int) string {

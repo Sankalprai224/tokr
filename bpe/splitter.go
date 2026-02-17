@@ -6,6 +6,10 @@ import (
 	"github.com/dlclark/regexp2"
 )
 
+const pattern = `'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+`
+
+var re = regexp2.MustCompile(pattern, regexp2.Compiled)
+
 func SplitText(text string, useGPT4 bool) []string {
 	if useGPT4 {
 		return GPTSplit(text)
@@ -15,9 +19,6 @@ func SplitText(text string, useGPT4 bool) []string {
 
 func GPTSplit(text string) []string {
 	var tokens []string
-
-	pattern := `'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+`
-	re := regexp2.MustCompile(pattern, regexp2.Compiled)
 
 	match, _ := re.FindStringMatch(text)
 	for match != nil {

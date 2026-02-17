@@ -2,9 +2,9 @@ import random
 
 # diverse_corpus.py
 SIZES = {
-    "prose": 5000,   # 5000 paragraphs of text
-    "code": 2000,    # 2000 snippets of code
-    "unicode": 1000, # 1000 lines of mixed scripts
+    "prose": 50000,   # 50000 paragraphs of text
+    "code": 20000,    # 20000 snippets of code
+    "unicode": 10000, # 10000 lines of mixed scripts
 }
 
 SAMPLES = {

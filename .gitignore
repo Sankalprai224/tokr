@@ -1,0 +1,18 @@
+# Ignore Python Virtual Environment
+.venv/
+__pycache__/
+*.pyc
+
+# Ignore compiled Go binaries
+tokenizer
+tokenizer.exe
+
+# Ignore VS Code settings (optional)
+.vscode/
+
+# Ignore testing cache
+.hypothesis/
+.pytest_cache/
+
+# Ignore large test data (Optional, but recommended to save space)
+*.txt
