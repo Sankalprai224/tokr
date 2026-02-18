@@ -7,6 +7,11 @@ import (
 )
 
 func (t *tokenizer) Encode(text string, useGPT4 bool) []int {
+
+	if len(text) == 0 {
+		return []int{}
+	}
+
 	//t.mu.RLock()
 	//defer t.mu.RUnlock()
 

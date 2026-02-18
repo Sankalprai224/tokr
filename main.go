@@ -156,6 +156,8 @@ func runServer(modelPath, port string, gpt4 bool) {
 			return
 		}
 
+		r.Body = http.MaxBytesReader(w, r.Body, 1048576)
+
 		var req TokenizeRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "bad request", http.StatusBadRequest)
@@ -181,6 +183,8 @@ func runServer(modelPath, port string, gpt4 bool) {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
+
+		r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 
 		var req DecodeRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
