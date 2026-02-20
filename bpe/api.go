@@ -76,6 +76,9 @@ func (t *tokenizer) Encode(text string, useGPT4 bool) []int {
 	copy(finalTokens, tokens)
 
 	t.cacheMu.Lock()
+	if len(t.cache) > 100000 {
+		t.cache = make(map[string][]int)
+	}
 	t.cache[text] = finalTokens
 	t.cacheMu.Unlock()
 
