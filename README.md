@@ -3,7 +3,7 @@
 
 `tokr` is a production-ready, pure Go implementation of the Byte Pair Encoding (BPE) tokenizer. Built for high-load AI infrastructure, it functions as both an embeddable library and a scalable microservice.
 
-It matches the GPT-4 tokenization rules while leveraging a parallelized, lock-free architecture to deliver massive throughput—without the Python GIL or CGO overhead.
+It matches the GPT-4 tokenization rules while leveraging a mutex-protected parallel architecture to deliver massive throughput—without the Python GIL or CGO overhead.
 
 ---
 
