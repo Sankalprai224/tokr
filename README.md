@@ -107,7 +107,7 @@ curl -X POST http://localhost:8080/encode \
      -d '{"text": "Hello world"}'
 ```
 
-## 📊 Benchmarks
+## 📊 Benchmarks and Testing
 Tests run on AMD Ryzen 5 7530U (25MB Corpus). tokr delivers ~80% of the throughput of OpenAI's Rust implementation (tiktoken).
 
 Throughput vs. Tiktoken:
@@ -128,6 +128,20 @@ Benchmark	             Latency	    Allocations	     Context
 BenchmarkPublicAPI	     52.55 ns/op	1 allocs/op	     Cached / Hot Path
 BenchmarkEncodeCore	     10.23 µs/op	75 allocs/op	 Uncached / Cold Path
 ```
+
+This project includes a native Go fuzzing suite and standard benchmarks. You can run them easily using the included Makefile:
+
+```bash
+# Run standard tests
+make test
+
+# Run the fuzzer (10s duration)
+make fuzz
+
+# Run performance benchmarks
+make bench
+```
+
 ## 🧩 Technical Architecture:
 ```
    Splitter (splitter.go): Uses inlined regex streaming to process data in chunks, preventing memory spikes even on massive files.
