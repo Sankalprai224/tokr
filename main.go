@@ -113,7 +113,7 @@ func runInference(modelPath, inputPath string, gpt4 bool) {
 
 	// Only print decoded text if it's short (to avoid flooding your terminal)
 	if len(text) < 1000 {
-		decoded := t.Decoder(ids)
+		decoded := t.Decode(ids)
 		fmt.Printf("Decoded: %q\n", decoded)
 		if text == decoded {
 			fmt.Println("Round-trip match successful")
@@ -168,6 +168,7 @@ func runServer(modelPath, port string, gpt4 bool) {
 		tokens, err := t.Encode(req.Text, gpt4)
 		if err != nil {
 			http.Error(w, " bad request regex failed ", http.StatusBadRequest)
+			return
 		}
 		duration := time.Since(start).Seconds()
 
@@ -195,7 +196,7 @@ func runServer(modelPath, port string, gpt4 bool) {
 			return
 		}
 
-		decodedText := t.Decoder(req.Tokens)
+		decodedText := t.Decode(req.Tokens)
 
 		resp := DecodeResponse{
 			Text: decodedText,

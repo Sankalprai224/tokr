@@ -41,42 +41,6 @@ func (t *tokenizer) Encode(text string, useGPT4 bool) ([]int, error) {
 		return nil, err
 	}
 
-	//bufptr := t.bufferpool.Get().(*[]int)
-	//ids := (*bufptr)[:0]
-
-	/*
-		for i := 0; i < len(chunk); i++ {
-			ids = append(ids, int(chunk[i]))
-		}
-
-		for {
-			if len(ids) < 2 {
-				break
-			}
-			bestIdx := -1
-			minrank := math.MaxInt
-
-			for i := 0; i < len(ids)-1; i++ {
-				p := pair{ids[i], ids[i+1]}
-				if rank, ok := t.merges[p]; ok {
-					if rank < minrank {
-						minrank = rank
-						bestIdx = i
-					}
-				}
-			}
-			if bestIdx == -1 {
-				break
-			}
-
-			ids[bestIdx] = minrank
-
-			copy(ids[bestIdx+1:], ids[bestIdx+2:])
-			ids = ids[:len(ids)-1]
-		}
-
-		allTokens = append(allTokens, ids...)
-	*/
 	finalTokens := make([]int, len(tokens))
 	copy(finalTokens, tokens)
 
@@ -90,13 +54,9 @@ func (t *tokenizer) Encode(text string, useGPT4 bool) ([]int, error) {
 	atomic.AddInt64(&t.TotalChunks, 1)
 	return tokens, nil
 
-	//*bufptr = ids
-	//t.bufferpool.Put(bufptr)
 }
 
 func (t *tokenizer) encodeCore(text string, useGPT4 bool) ([]int, error) {
-
-	//	textChunks := SplitText(text, useGPT4)
 
 	allTokens := make([]int, 0, len(text)/3+1)
 
@@ -181,7 +141,7 @@ func runMergeLogic(t *tokenizer, ids *[]int) {
 
 }
 
-func (t *tokenizer) Decoder(ids []int) string {
+func (t *tokenizer) Decode(ids []int) string {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 

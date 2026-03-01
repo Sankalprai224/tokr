@@ -28,7 +28,7 @@ func FuzzEncodeDecode(f *testing.F) {
 		tokens, _ := tok.Encode(orig, false)
 
 		// Step B: Decode
-		decoded := tok.Decoder(tokens)
+		decoded := tok.Decode(tokens)
 
 		// Step C: Verify Integrity
 		if orig != decoded {

@@ -36,7 +36,7 @@ func TestEncodeDecode(t *testing.T) {
 
 	// Test Round-Trip Integrity
 	// Note: Make sure to use the correct method name (Decode vs Decoder)
-	decoded := tok.Decoder(tokens)
+	decoded := tok.Decode(tokens)
 	if decoded != original {
 		t.Errorf("Mismatch!\nExpected: %q\nGot:      %q\nTokens:   %v", original, decoded, tokens)
 	}
