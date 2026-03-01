@@ -29,7 +29,7 @@ func TestEncodeDecode(t *testing.T) {
 	original := "Hello World"
 
 	// Test Encode
-	tokens := tok.Encode(original, false)
+	tokens, _ := tok.Encode(original, false)
 	if len(tokens) == 0 {
 		t.Fatalf("Expected tokens, got empty slice")
 	}

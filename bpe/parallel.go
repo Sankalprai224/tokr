@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
 	"runtime"
 	"strings"
 	"sync"
@@ -96,7 +97,10 @@ func (t *tokenizer) ParallelEncode(text string, useGPT4 bool) []int {
 
 func worker(t *tokenizer, useGPT4 bool, jobs <-chan Job, results chan<- Result) {
 	for job := range jobs {
-		tkns := t.encodeCore(job.Text, useGPT4)
+		tkns, err := t.encodeCore(job.Text, useGPT4)
+		if err != nil {
+			log.Printf("error the encoding failed due to regex faliure")
+		}
 
 		results <- Result{
 			Index:  job.Index,

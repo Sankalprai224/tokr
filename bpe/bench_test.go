@@ -28,7 +28,7 @@ func BenchmarkEncodeCore(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		// Assign to global variable so compiler doesn't skip this
-		resultSink = t.encodeCore(text, true)
+		resultSink, _ = t.encodeCore(text, true)
 	}
 }
 
@@ -45,6 +45,6 @@ func BenchmarkPublicAPI(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		resultSink = t.Encode(text, true)
+		resultSink, _ = t.Encode(text, true)
 	}
 }

@@ -25,7 +25,7 @@ func FuzzEncodeDecode(f *testing.F) {
 
 		// Step A: Encode
 		// We use `false` for parallelism to keep the fuzzer deterministic and simple
-		tokens := tok.Encode(orig, false)
+		tokens, _ := tok.Encode(orig, false)
 
 		// Step B: Decode
 		decoded := tok.Decoder(tokens)

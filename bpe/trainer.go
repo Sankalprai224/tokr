@@ -3,7 +3,6 @@ package bpe
 func Train(text string, vocabSize int, useGPT4 bool) *tokenizer {
 
 	t := NewTokenizer()
-	//regex implementation pending
 	chunks := SplitText(text, useGPT4)
 
 	if useGPT4 {

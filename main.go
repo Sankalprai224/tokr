@@ -165,7 +165,10 @@ func runServer(modelPath, port string, gpt4 bool) {
 		}
 
 		start := time.Now()
-		tokens := t.Encode(req.Text, gpt4)
+		tokens, err := t.Encode(req.Text, gpt4)
+		if err != nil {
+			http.Error(w, " bad request regex failed ", http.StatusBadRequest)
+		}
 		duration := time.Since(start).Seconds()
 
 		resp := TokenizeResponse{

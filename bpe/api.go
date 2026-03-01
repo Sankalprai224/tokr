@@ -1,15 +1,16 @@
 package bpe
 
 import (
+	"log"
 	"math"
 	"strings"
 	"sync/atomic"
 )
 
-func (t *tokenizer) Encode(text string, useGPT4 bool) []int {
+func (t *tokenizer) Encode(text string, useGPT4 bool) ([]int, error) {
 
 	if len(text) == 0 {
-		return []int{}
+		return []int{}, nil
 	}
 
 	//t.mu.RLock()
@@ -30,11 +31,15 @@ func (t *tokenizer) Encode(text string, useGPT4 bool) []int {
 	if found {
 		atomic.AddInt64(&t.CacheHits, 1)
 		//allTokens = append(allTokens, cached...)
-		return append([]int(nil), cached...)
+		return append([]int(nil), cached...), nil
 
 	}
 
-	tokens := t.encodeCore(text, useGPT4)
+	tokens, err := t.encodeCore(text, useGPT4)
+	if err != nil {
+		log.Printf("error : regex failed")
+		return nil, err
+	}
 
 	//bufptr := t.bufferpool.Get().(*[]int)
 	//ids := (*bufptr)[:0]
@@ -83,13 +88,13 @@ func (t *tokenizer) Encode(text string, useGPT4 bool) []int {
 	t.cacheMu.Unlock()
 
 	atomic.AddInt64(&t.TotalChunks, 1)
-	return tokens
+	return tokens, nil
 
 	//*bufptr = ids
 	//t.bufferpool.Put(bufptr)
 }
 
-func (t *tokenizer) encodeCore(text string, useGPT4 bool) []int {
+func (t *tokenizer) encodeCore(text string, useGPT4 bool) ([]int, error) {
 
 	//	textChunks := SplitText(text, useGPT4)
 
@@ -98,7 +103,11 @@ func (t *tokenizer) encodeCore(text string, useGPT4 bool) []int {
 	ids := make([]int, 0, 1024)
 
 	if useGPT4 {
-		match, _ := re.FindStringMatch(text)
+		match, err := re.FindStringMatch(text)
+		if err != nil {
+			log.Printf("regex failed")
+			return nil, err
+		}
 
 		for match != nil {
 			chunk := match.String()
@@ -115,7 +124,11 @@ func (t *tokenizer) encodeCore(text string, useGPT4 bool) []int {
 
 			allTokens = append(allTokens, ids...)
 
-			match, _ = re.FindNextMatch(match)
+			match, err = re.FindNextMatch(match)
+			if err != nil {
+				log.Printf("error regex failed")
+				return nil, err
+			}
 
 		}
 	} else {
@@ -130,7 +143,7 @@ func (t *tokenizer) encodeCore(text string, useGPT4 bool) []int {
 			allTokens = append(allTokens, ids...)
 		}
 	}
-	return allTokens
+	return allTokens, nil
 
 }
 
