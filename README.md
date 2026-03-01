@@ -56,7 +56,7 @@ func main() {
 
     // 3. Decode back to string
     // Note: It is Decode(), not Decoder()
-    decoded := t.Decoder(tokens)
+    decoded := t.Decode(tokens)
     fmt.Println("Text:", decoded)
 }
 ```
