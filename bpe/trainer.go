@@ -20,6 +20,12 @@ func Train(text string, vocabSize int, useGPT4 bool) *tokenizer {
 		}
 		ids = append(ids, tokens)
 	}
+
+	workspace := make([][]int, len(ids))
+	for j := range ids {
+		workspace[j] = make([]int, 0, cap(ids[j]))
+	}
+
 	numMerges := vocabSize - 256
 	for i := 0; i < numMerges; i++ {
 
@@ -49,7 +55,11 @@ func Train(text string, vocabSize int, useGPT4 bool) *tokenizer {
 		t.orderedPairs = append(t.orderedPairs, bestpair)
 
 		for j, _ := range ids {
-			ids[j] = merger(ids[j], bestpair, newId)
+			mergedTokens := merger(ids[j], bestpair, newId, workspace[j])
+
+			workspace[j] = ids[j]
+
+			ids[j] = mergedTokens
 		}
 	}
 	t.buildVocab()

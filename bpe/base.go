@@ -51,26 +51,27 @@ func getStats(tokens []int) map[pair]int {
 	return counts
 }
 
-func merger(tokens []int, p pair, idx int) []int {
+func merger(tokens []int, p pair, idx int, buf []int) []int {
 
 	if len(tokens) < 2 {
 		return tokens
 	}
 
-	newTokens := make([]int, 0, len(tokens))
+	//newTokens := make([]int, 0, len(tokens))
 	i := 0
+	buf = buf[:0]
 
 	for i < len(tokens) {
 		if tokens[i] == p.first && i < len(tokens)-1 && tokens[i+1] == p.second {
-			newTokens = append(newTokens, idx)
+			buf = append(buf, idx)
 			i += 2
 		} else {
-			newTokens = append(newTokens, tokens[i])
+			buf = append(buf, tokens[i])
 			i += 1
 		}
 
 	}
-	return newTokens
+	return buf
 }
 
 func (t *tokenizer) buildVocab() {

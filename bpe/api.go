@@ -80,7 +80,7 @@ func (t *tokenizer) encodeCore(text string, useGPT4 bool) ([]int, error) {
 				ids = append(ids, int(chunk[i]))
 			}
 
-			runMergeLogic(t, &ids)
+			ids = runMergeLogic(t, ids)
 
 			allTokens = append(allTokens, ids...)
 
@@ -99,7 +99,7 @@ func (t *tokenizer) encodeCore(text string, useGPT4 bool) ([]int, error) {
 			for i := 0; i < len(chunk); i++ {
 				ids = append(ids, int(chunk[i]))
 			}
-			runMergeLogic(t, &ids)
+			ids = runMergeLogic(t, ids)
 			allTokens = append(allTokens, ids...)
 		}
 	}
@@ -107,9 +107,7 @@ func (t *tokenizer) encodeCore(text string, useGPT4 bool) ([]int, error) {
 
 }
 
-func runMergeLogic(t *tokenizer, ids *[]int) {
-
-	val := *ids
+func runMergeLogic(t *tokenizer, val []int) []int {
 
 	for {
 		if len(val) < 2 {
@@ -137,7 +135,7 @@ func runMergeLogic(t *tokenizer, ids *[]int) {
 		val = val[:len(val)-1]
 	}
 
-	*ids = val
+	return val
 
 }
 

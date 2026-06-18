@@ -1,12 +1,8 @@
 package bpe
 
 import (
-	"bufio"
-	"fmt"
-	"io"
 	"log"
 	"runtime"
-	"strings"
 	"sync"
 )
 
@@ -18,49 +14,51 @@ type Job struct {
 type Result struct {
 	Index  int
 	Tokens []int
+	Err    error
 }
 
-func (t *tokenizer) ParallelEncode(text string, useGPT4 bool) []int {
-	r := bufio.NewReader(strings.NewReader(text))
-	chunkidx := 0
-	var sb strings.Builder
-	chunks := []string{}
-	totalRead := 0
-	const chunksize = 999000
-	//const chunksize = 50000
-	for {
-		lines, err := r.ReadString('\n')
-		totalRead += len(lines)
-		sb.WriteString(lines)
-
-		if totalRead >= chunksize {
-			fmt.Printf("the size of file is %d\n", totalRead)
-			chunkidx += 1
-			totalRead = 0
-			chunks = append(chunks, sb.String())
-			sb.Reset()
-
-		}
-
-		if err == io.EOF {
-			fmt.Printf("EOF reached, the size of file is %d\n", totalRead)
-			break
-		}
-
-		if err != nil {
-			fmt.Println("error reading file:", err)
-			break
-		}
+func (t *tokenizer) ParallelEncode(text string, useGPT4 bool) ([]int, error) {
+	if len(text) == 0 {
+		return nil, nil
 	}
-	if sb.Len() > 0 {
-		chunks = append(chunks, sb.String())
-		chunkidx += 1
+
+	var chunks []string
+	const chunksize = 1000000 // 1MB chunks
+
+	start := 0
+	for start < len(text) {
+		end := start + chunksize
+		if end >= len(text) {
+			chunks = append(chunks, text[start:])
+			break
+		}
+
+		// Backward scan for natural boundary
+		splitPoint := end
+		for splitPoint > start {
+			if text[splitPoint] == ' ' || text[splitPoint] == '\n' {
+				break
+			}
+			splitPoint--
+		}
+
+		// Fallback for missing boundaries, ensuring UTF-8 integrity
+		if splitPoint == start {
+			splitPoint = end
+			for splitPoint > start && (text[splitPoint]&0xC0) == 0x80 {
+				splitPoint--
+			}
+		}
+
+		chunks = append(chunks, text[start:splitPoint])
+		start = splitPoint
 	}
 
 	numjobs := len(chunks)
 	jobs := make(chan Job, numjobs)
 	results := make(chan Result, numjobs)
 	numworkers := runtime.NumCPU()
+
 	var wg sync.WaitGroup
 	for w := 0; w < numworkers; w++ {
 		wg.Add(1)
@@ -69,10 +67,11 @@ func (t *tokenizer) ParallelEncode(text string, useGPT4 bool) []int {
 			worker(t, useGPT4, jobs, results)
 		}()
 	}
-	for i, text := range chunks {
+
+	for i, chunkText := range chunks {
 		jobs <- Job{
 			Index: i,
-			Text:  text,
+			Text:  chunkText,
 		}
 	}
 	close(jobs)
@@ -83,16 +82,30 @@ func (t *tokenizer) ParallelEncode(text string, useGPT4 bool) []int {
 	}()
 
 	final := make([][]int, numjobs)
+	var firstError error
 	for res := range results {
+		if res.Err != nil && firstError == nil {
+			firstError = res.Err
+		}
 		final[res.Index] = res.Tokens
 	}
 
-	var alltokens []int
-	for _, chunkalltokens := range final {
-		alltokens = append(alltokens, chunkalltokens...)
+	if firstError != nil {
+		return nil, firstError
 	}
-	return alltokens
 
+	// Zero-allocation assembly path
+	totalLen := 0
+	for _, chunkTokens := range final {
+		totalLen += len(chunkTokens)
+	}
+
+	alltokens := make([]int, 0, totalLen)
+	for _, chunkTokens := range final {
+		alltokens = append(alltokens, chunkTokens...)
+	}
+
+	return alltokens, nil
 }
 
 func worker(t *tokenizer, useGPT4 bool, jobs <-chan Job, results chan<- Result) {
@@ -105,6 +118,7 @@ func worker(t *tokenizer, useGPT4 bool, jobs <-chan Job, results chan<- Result) 
 		results <- Result{
 			Index:  job.Index,
 			Tokens: tkns,
+			Err:    err,
 		}
 	}
 }

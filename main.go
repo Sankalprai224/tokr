@@ -92,7 +92,10 @@ func runInference(modelPath, inputPath string, gpt4 bool) {
 	start := time.Now()
 
 	// 3. Run the Hot Path
-	ids := t.ParallelEncode(text, gpt4)
+	ids, err := t.ParallelEncode(text, gpt4)
+	if err != nil {
+		log.Fatalf("parallel encoding failed : %v", err)
+	}
 
 	// 4. Stop the Timer
 	duration := time.Since(start)
@@ -165,7 +168,13 @@ func runServer(modelPath, port string, gpt4 bool) {
 		}
 
 		start := time.Now()
-		tokens, err := t.Encode(req.Text, gpt4)
+		var tokens []int
+		var err error
+		if len(req.Text) > 999000 {
+			tokens, err = t.ParallelEncode(req.Text, gpt4)
+		} else {
+			tokens, err = t.Encode(req.Text, gpt4)
+		}
 		if err != nil {
 			http.Error(w, " bad request regex failed ", http.StatusBadRequest)
 			return
